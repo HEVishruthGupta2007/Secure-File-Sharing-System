@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<h1>{{ 'All files' if current_user.is_admin() else 'Your files' }}</h1>
+<p style="color:var(--muted);font-size:13.5px;margin:0">
+  Every file is encrypted with its own key before it touches disk.
+  {% if current_user.is_admin() %}As an admin, you can see and manage every user's files.{% endif %}
+</p>
+
+<h2>Upload</h2>
+<form method="post" action="{{ url_for('files.upload') }}" enctype="multipart/form-data" class="actions">
+  <input type="file" name="file" required>
+  <button type="submit">Encrypt &amp; upload</button>
+</form>
+
+<h2>{{ 'Files' if current_user.is_admin() else 'Your uploads' }}</h2>
+{% if owned %}
+<table>
+  <thead>
+    <tr><th>File</th><th>Owner</th><th>Size</th><th>Uploaded</th><th>Shared with</th><th>Actions</th></tr>
+  </thead>
+  <tbody>
+    {% for f in owned %}
+    <tr>
+      <td class="fname">{{ f.original_filename }}</td>
+      <td class="meta">{{ f.owner.username }}</td>
+      <td class="meta">{{ (f.size_bytes / 1024) | round(1) }} KB</td>
+      <td class="meta">{{ f.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>
+        {% if f.shares %}
+        <div class="sharelist">
+          {% for s in f.shares %}
+          <span>{{ s.user.username }} ({{ s.permission }})
+            <form method="post" action="{{ url_for('files.unshare', file_id=f.id, user_id=s.user_id) }}" style="display:inline">
+              <button type="submit" class="ghost" style="padding:0 4px;font-size:11px;line-height:1.4">x</button>
+            </form>
+          </span>
+          {% endfor %}
+        </div>
+        {% else %}
+        <span class="meta">&mdash;</span>
+        {% endif %}
+      </td>
+      <td>
+        <div class="actions">
+          <a class="btn ghost" href="{{ url_for('files.download', file_id=f.id) }}">Download</a>
+          <form method="post" action="{{ url_for('files.delete', file_id=f.id) }}"
+                onsubmit="return confirm('Delete {{ f.original_filename }}? This cannot be undone.')">
+            <button type="submit" class="danger">Delete</button>
+          </form>
+        </div>
+        {% if other_users %}
+        <form method="post" action="{{ url_for('files.share', file_id=f.id) }}" class="sharebox">
+          <select name="username" required>
+            <option value="" disabled selected>Share with&hellip;</option>
+            {% for u in other_users %}
+            <option value="{{ u.username }}">{{ u.username }}</option>
+            {% endfor %}
+          </select>
+          <select name="permission">
+            <option value="download">download</option>
+            <option value="view">view only</option>
+          </select>
+          <button type="submit" class="ghost">Share</button>
+        </form>
+        {% else %}
+        <div class="sharebox">
+          <span class="meta" style="align-self:center;font-size:12px;opacity:0.7">Register a 2nd account to enable sharing</span>
+        </div>
+        {% endif %}
+        <form method="post" action="{{ url_for('files.create_link', file_id=f.id) }}" class="sharebox">
+          <input type="number" name="minutes" value="60" min="1" max="10080" style="width:70px" title="Minutes until expiry">
+          <span class="meta" style="align-self:center">min link</span>
+          <button type="submit" class="ghost">Create link</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No files yet &mdash; upload one above.</p>
+{% endif %}
+
+{% if not current_user.is_admin() %}
+<h2>Shared with you</h2>
+{% if shared_with_me %}
+<table>
+  <thead><tr><th>File</th><th>Owner</th><th>Size</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for f in shared_with_me %}
+    <tr>
+      <td class="fname">{{ f.original_filename }}</td>
+      <td class="meta">{{ f.owner.username }}</td>
+      <td class="meta">{{ (f.size_bytes / 1024) | round(1) }} KB</td>
+      <td>
+        {% set user_share = f.shares | selectattr('user_id', 'equalto', current_user.id) | first %}
+        {% if user_share and user_share.permission == 'download' %}
+        <a class="btn ghost" href="{{ url_for('files.download', file_id=f.id) }}">Download</a>
+        {% else %}
+        <span class="badge">view only</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">Nothing has been shared with you yet.</p>
+{% endif %}
+{% endif %}
+
+{% endblock %}

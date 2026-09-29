@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Secure File Sharing{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --base:#101823; --surface:#18222f; --raised:#1f2b3b; --line:#2b3a4d;
+    --text:#dce4ee; --muted:#7d8da3; --signal:#f2a63b;
+    --safe:#4fb37a; --danger:#e0674f;
+    --sans:"IBM Plex Sans",-apple-system,Segoe UI,Roboto,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--base);color:var(--text);font:400 15px/1.55 var(--sans)}
+  a{color:var(--signal);text-decoration:none}
+  header{
+    display:flex;align-items:center;gap:16px;padding:16px 26px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+  }
+  header .brand{font-weight:600;font-size:15px}
+  header .who{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:13px;color:var(--muted)}
+  .badge{
+    font:500 11px/1 var(--mono);padding:3px 7px;border-radius:3px;
+    background:var(--raised);border:1px solid var(--line);color:var(--signal);
+  }
+  main{max-width:920px;margin:0 auto;padding:34px 24px 70px}
+  h1{font-size:22px;margin:0 0 6px}
+  h2{font-size:15px;color:var(--muted);font-weight:600;margin:34px 0 14px}
+  .flash{padding:11px 16px;border-radius:5px;margin-bottom:16px;font-size:13.5px}
+  .flash.success{background:#173726;border:1px solid #2c5a3f;color:#8fd6ae}
+  .flash.error{background:#3a2118;border:1px solid #5c3325;color:#f0a58c}
+  input,select{
+    background:var(--raised);color:var(--text);border:1px solid var(--line);
+    border-radius:5px;padding:9px 11px;font:400 13.5px var(--sans);
+  }
+  input:focus,select:focus,button:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
+  button,.btn{
+    background:var(--signal);color:#1a1205;border:none;border-radius:5px;
+    padding:9px 16px;font:500 13.5px var(--sans);cursor:pointer;
+  }
+  button.ghost,.btn.ghost{background:var(--raised);color:var(--text);border:1px solid var(--line)}
+  button.danger{background:var(--danger);color:#2a0e07}
+  form{display:inline}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:24px;max-width:380px;margin:40px auto}
+  .card label{display:block;font-size:12.5px;color:var(--muted);margin:14px 0 5px}
+  .card input{width:100%}
+  .card .submit{width:100%;margin-top:20px;padding:11px}
+  .card p.foot{text-align:center;margin-top:16px;font-size:13px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;color:var(--muted);font-weight:500;font-size:12px;padding:8px 10px;border-bottom:1px solid var(--line)}
+  td{padding:10px;border-bottom:1px solid #1c2735;vertical-align:top}
+  .fname{font-weight:500}
+  .meta{color:var(--muted);font-size:12px;font-family:var(--mono)}
+  .actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .sharebox{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .sharebox input, .sharebox select{padding:6px 8px;font-size:12.5px}
+  .empty{color:var(--muted);padding:20px 0;font-size:13.5px}
+  .sharelist{margin-top:6px;font-size:12px;color:var(--muted)}
+  .sharelist span{display:inline-flex;align-items:center;gap:4px;background:var(--raised);border:1px solid var(--line);border-radius:3px;padding:2px 6px;margin:2px 4px 0 0}
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">Secure File Sharing</span>
+  {% if current_user.is_authenticated %}
+  <span class="who">
+    <span class="badge">{{ current_user.role }}</span>
+    {{ current_user.username }}
+    &middot; <a href="{{ url_for('auth.logout') }}">Log out</a>
+  </span>
+  {% endif %}
+</header>
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>
